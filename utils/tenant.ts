@@ -1,49 +1,88 @@
 import { extractTenantFromHost } from './extractTenantFromHost'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import { useRequestEvent } from 'nuxt/app'
 
 // Simple tenant getter that works everywhere
 export function getTenant(): string | null {
+  const hostname = typeof window !== 'undefined'
+    ? window.location.hostname
+    : useRequestEvent()?.context?.hostname
+  
+  if (!hostname) return null
+  
+  let tenant: string | null = null
+  
   if (typeof window !== 'undefined') {
     // Client side
-    return extractTenantFromHost(window.location.hostname)
+    tenant = extractTenantFromHost(hostname)
   } else {
     // Server side
     try {
       const event = useRequestEvent()
-      return event?.context?.tenant || null
+      tenant = event?.context?.tenant || null
     } catch {
-      return null
+      tenant = null
+    }
+  }
+  
+  return tenant
+}
+
+// Centralized reactive tenant store
+const tenantStore = shallowRef<{
+  tenant: string | null
+  isInitialized: boolean
+}>({
+  tenant: null,
+  isInitialized: false
+})
+
+// Reactive version for components
+export function useTenant() {
+  const initializeTenant = () => {
+    if (tenantStore.value.isInitialized) return
+    
+    tenantStore.value.tenant = getTenant()
+    tenantStore.value.isInitialized = true
+  }
+  
+  // Initialize on first use
+  if (!tenantStore.value.isInitialized) {
+    initializeTenant()
+  }
+  
+  const currentTenant = computed(() => tenantStore.value.tenant)
+  
+  return {
+    tenant: currentTenant,
+    tenantId: currentTenant,
+    hasTenant: computed(() => !!currentTenant.value),
+    initializeTenant,
+    refreshTenant: () => {
+      tenantStore.value.tenant = getTenant()
+      tenantStore.value.isInitialized = true
     }
   }
 }
 
-// Reactive version for components
-export function useTenant() {
-  const tenant = ref<string | null>(null)
-  const isInitialized = ref(false)
-  
-  const initializeTenant = () => {
-    if (isInitialized.value) return
-    
-    tenant.value = getTenant()
-    isInitialized.value = true
-    console.log('[useTenant] Tenant initialized:', tenant.value)
-  }
-  
-  // Initialize on first use
-  if (!isInitialized.value) {
-    initializeTenant()
-  }
+// Server-side only version to avoid hydration issues
+export function useTenantServer() {
+  const tenant = computed(() => {
+    // Only run on server side
+    if (process.server) {
+      try {
+        const event = useRequestEvent()
+        return event?.context?.tenant || null
+      } catch {
+        return null
+      }
+    }
+    return null
+  })
   
   return {
-    tenant: computed(() => tenant.value),
-    tenantId: computed(() => tenant.value),
+    tenant,
+    tenantId: tenant,
     hasTenant: computed(() => !!tenant.value),
-    initializeTenant,
-    refreshTenant: () => {
-      tenant.value = getTenant()
-      isInitialized.value = true
-    }
   }
 }

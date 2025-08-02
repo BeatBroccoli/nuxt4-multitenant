@@ -8,10 +8,13 @@
   <div v-if="tenant">
     Tenant should be detected as <b>{{ tenant }}</b>
   </div>
+  <div v-else>
+    No tenant detected
+  </div>
 </template>
 
 <script setup>
-import { useTenant } from '~~/utils/tenant'
+import { useTenant } from '~~/app/composables/useTenant'
 
 const { tenant } = useTenant()
 </script>

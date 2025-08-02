@@ -2,23 +2,28 @@ import { extractTenantFromHost } from "~~/utils/extractTenantFromHost";
 
 export default defineEventHandler(async event => {
   try {
-    const { hostname, pathname } = getRequestURL(event);
+    const { hostname } = getRequestURL(event);
 
-    console.log('[tenancy.middleware] Processing request:', {
-      hostname,
-      pathname,
-      fullHost: getRequestURL(event).href
-    });
+    // Only log in development
+    if (process.dev) {
+      console.log('[tenancy.middleware] Processing request:', {
+        hostname,
+        pathname: getRequestURL(event).pathname
+      });
+    }
 
     let tenantData = extractTenantFromHost(hostname);
     
-    console.log('[tenancy.middleware] Tenant detection result:', {
-      hostname,
-      tenantData,
-      extractedParts: hostname?.split(':')[0]?.split('.')
-    });
+    // Only log in development
+    if (process.dev && tenantData) {
+      console.log('[tenancy.middleware] Tenant detected:', {
+        hostname,
+        tenantData
+      });
+    }
 
     event.context.tenant = tenantData;
+    event.context.hostname = hostname; // Add hostname to context for easier access
     
   } catch (error) {
     console.error("Error in tenancy plugin:", error);

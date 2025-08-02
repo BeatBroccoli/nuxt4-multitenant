@@ -36,9 +36,6 @@ export function extractTenantFromHost(hostname: string, config: TenantConfig = d
   
   if (!cleanHostname) return null
   
-  // Split into parts
-  const parts = cleanHostname.split('.')
-  
   // If custom extractor is provided, use it
   if (config.customExtractor) {
     return config.customExtractor(cleanHostname)
@@ -50,7 +47,12 @@ export function extractTenantFromHost(hostname: string, config: TenantConfig = d
     cleanHostname.endsWith(domain)
   )
   
-  if (!tenantDomain) return null
+  if (!tenantDomain) {
+    return null
+  }
+  
+  // Split into parts only if we have a tenant domain
+  const parts = cleanHostname.split('.')
   
   // Find tenant part (should be the part before the tenant domain)
   const tenantIndex = parts.findIndex(part =>
