@@ -4,7 +4,19 @@ export default defineEventHandler(async event => {
   try {
     const { hostname, pathname } = getRequestURL(event);
 
+    console.log('[tenancy.middleware] Processing request:', {
+      hostname,
+      pathname,
+      fullHost: getRequestURL(event).href
+    });
+
     let tenantData = extractTenantFromHost(hostname);
+    
+    console.log('[tenancy.middleware] Tenant detection result:', {
+      hostname,
+      tenantData,
+      extractedParts: hostname?.split(':')[0]?.split('.')
+    });
 
     event.context.tenant = tenantData;
     

@@ -11,9 +11,9 @@
 </template>
 
 <script setup>
-  import { extractTenantFromHost } from '~~/utils/extractTenantFromHost'
-  let tenant = ref('')
-  if(import.meta.client) tenant.value = extractTenantFromHost(document.location.host);
+import { useTenant } from '~~/utils/tenant'
+
+const { tenant } = useTenant()
 </script>
 
 <style scoped>

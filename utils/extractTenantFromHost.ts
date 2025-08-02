@@ -1,5 +1,17 @@
+import { extractTenantFromHost as extractTenantWithConfig, getTenantConfig } from './tenantConfig'
+
 export function extractTenantFromHost(host: string): string | null {
-  const notTenant = ["dev", "www", "localhost"];
-  const parts = host?.split(':')[0]?.split('.') ?? [];
-  return parts.find(p => !notTenant.includes(p.toLowerCase())) || null
+  const config = getTenantConfig()
+  const result = extractTenantWithConfig(host, config)
+  
+  console.log('[extractTenantFromHost] Input:', {
+    host,
+    config: {
+      excludedSubdomains: config.excludedSubdomains,
+      tenantDomains: config.tenantDomains
+    },
+    result
+  });
+  
+  return result
 }
